@@ -1,5 +1,6 @@
 import subprocess
 import os
+import time
 
 # Prompt the user to enter the path to the file containing the list of URLs
 file_path = input("Enter the path to the file containing the list of URLs: ")
@@ -20,8 +21,11 @@ alive_file_path = os.path.join(output_dir, "Alive.txt")
 # Create the Dead.txt file path
 dead_file_path = os.path.join(output_dir, "Dead.txt")
 
+#adding forbidden directory
+forbidden_dir_path = os.path.join(output_dir, "forbidden.txt")
+
 # Loop through each URL and run the curl -I command using subprocess
-with open(output_file_path, "w") as out, open(alive_file_path, "w") as alive, open(dead_file_path, "w") as dead, open(os.path.join(output_dir, "output.txt"), "w") as all_output:
+with open(output_file_path, "w") as out, open(alive_file_path, "w") as alive, open(dead_file_path, "w") as dead, open(forbidden_dir_path, "w") as forbidden, open(os.path.join(output_dir, "output.txt"), "w") as all_output:
     for url in urls:
         output = subprocess.run(["curl", "-I", url], capture_output=True, text=True)
         if output.stdout:
@@ -35,8 +39,15 @@ with open(output_file_path, "w") as out, open(alive_file_path, "w") as alive, op
             response_code = int(output.stdout.split()[1])
             if 200 <= response_code <= 399:
                 alive.write(f"{url} {response_code}\n")
+                print(f"{url} is alive with response code {response_code}")
+            elif 403 == response_code:
+                forbidden.write(f"{url} {response_code}\n")
+                print(f"{url} shows forbidden, saving it to forbidden file {response_code}")
             else:
                 dead.write(f"{url}\n")
+                print(f"{url} shows {response_code}") #Has forbidden status
         else:
-            all_output.write(f"Host {url} seems not alive\n")
-            dead.write(f"{url}\n")
+            all_output.write(f"Host {url} shows {response_code} \n")
+            dead.write(f"{url} {response_code}\n")
+            print(f"{url} shows {response_code}")
+        time.sleep(10) # Add delay of 20 seconds after each request
